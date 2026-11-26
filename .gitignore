@@ -1,0 +1,37 @@
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python / Django
+__pycache__/
+*.py[cod]
+*.sqlite3
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+backend/.venv/
+backend/venv/
+
+# Django
+staticfiles/
+media/
+
+# Node / React / Vite
+node_modules/
+dist/
+.vite/
+
+# Build artifacts
+build/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
