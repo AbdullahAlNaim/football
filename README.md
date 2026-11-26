@@ -4,10 +4,19 @@ A personal football dashboard that tracks the **UEFA Champions League** for the 
 
 Built with **React + TypeScript**, **Django REST Framework** and **PostgreSQL**, with data from [football-data.org](https://www.football-data.org/).
 
-<!-- Add screenshots here once you have them, e.g.:
+## Screenshots
+
+**Dashboard**: week strip, featured match with countdown, Champions League table with last-5 form, and latest results.
+
 ![Dashboard](docs/dashboard.png)
+
+**Calendar**: a month view with only the followed clubs' fixtures and kickoff times.
+
 ![Calendar](docs/calendar.png)
--->
+
+**My Teams**: search and follow clubs; the calendar and dashboard update straight away.
+
+![My Teams](docs/teams.png)
 
 ---
 
@@ -155,6 +164,59 @@ Open http://localhost:5173. Vite forwards `/api` requests to Django, so there's 
 ### 5. Pick your teams
 
 Go to **Teams** (the shield icon), follow your clubs, and their fixtures appear on the dashboard and calendar.
+
+## Updating the data
+
+Syncing isn't scheduled yet (see the [roadmap](#roadmap)), so the data only changes when you run a sync command. If a match that's already been played still shows **"vs"** and a countdown at `00`, or the table and last-5 form look behind Google's, the data just needs a sync.
+
+### Which command to run
+
+| When | Command | What it updates | API calls |
+| --- | --- | --- | --- |
+| **After a match day** (recommended) | `python manage.py sync_fixtures` | Every match's score and status, rescheduled kickoffs, **and the league table** | 2 |
+| Quick score check after a match | `python manage.py sync_results` | Scores and status of matches that kicked off 2+ hours ago. Does **not** refresh the table yet | 0–1 per match day |
+| Start of a new season | Set `CURRENT_SEASON` in `.env` (e.g. `2027` for 2027/28), then `sync_fixtures` | The new season's teams, schedule and table | 2 |
+| After a knockout draw | `python manage.py sync_fixtures` | Adds knockout fixtures once both teams are known | 2 |
+
+### Steps (Windows PowerShell)
+
+```powershell
+# 1. Make sure the database is running
+docker compose up -d db
+
+# 2. Activate the backend environment
+cd backend
+venv\Scripts\Activate.ps1
+
+# 3. Sync
+python manage.py sync_fixtures
+```
+
+On macOS or Linux, activate with `source venv/bin/activate` instead.
+
+Then **reload the page** in the browser. The frontend caches data for up to 5 minutes, and a reload fetches it fresh. You don't need to restart Django or Vite.
+
+To check it worked: in the admin (http://localhost:8000/admin/), **Matches** should show `FINISHED` with scores for games that have been played.
+
+### If something looks off
+
+| What you see | Why | Fix |
+| --- | --- | --- |
+| A finished match still shows "vs" | Not synced since it ended, or football-data.org hasn't marked it finished yet (free-tier scores lag slightly) | Run `sync_fixtures` again a little later |
+| Last 5 has fewer dots than MP | Same cause: the table counts a match your stored results don't have yet | `sync_fixtures` |
+| `RateLimited` error | More than 10 API calls in a minute | Wait 60 seconds and run it again |
+| `Your API token is invalid` | Wrong or missing `FOOTBALL_DATA_TOKEN` in `.env` | Copy the token from your football-data.org account |
+| A connection error mentioning port 5433 | The database container isn't running | `docker compose up -d db` |
+
+### Optional: sync automatically every night on Windows
+
+Until the worker container exists, Windows Task Scheduler can run the sync daily. Replace `C:\path\to\football` with where you cloned the repo; Docker Desktop has to be running for the database to be reachable.
+
+```powershell
+schtasks /Create /TN "Matchday sync" /SC DAILY /ST 23:30 /TR "C:\path\to\football\backend\venv\Scripts\python.exe C:\path\to\football\backend\manage.py sync_fixtures"
+```
+
+Champions League matches finish by about 5:00 PM US Eastern, so a late-evening run catches every result that day. Remove it with `schtasks /Delete /TN "Matchday sync"`.
 
 ## API
 
