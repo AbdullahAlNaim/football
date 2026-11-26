@@ -1,6 +1,7 @@
 from django.db import connection
 from django.utils import timezone
-from rest_framework.decorators import api_view
+from django.shortcuts import get_object_or_404
+from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
 from django.conf import settings
 from django.utils.dateparse import parse_date
@@ -8,10 +9,12 @@ from rest_framework.exceptions import ValidationError
 
 from .models import Standing, Team
 from .selectors import matches_between, recent_form
-from .serializers import MatchSerializer, StandingSerializer, TeamSerializer
+from .serializers import MatchSerializer, StandingSerializer, TeamFollowSerializer, TeamSerializer
 
 
 MAX_RANGE_DAYS = 62
+FORM_LENGTH = 5
+TABLE_STAGE = "LEAGUE_STAGE"
 
 @api_view(["GET"])
 def health(request):
@@ -53,7 +56,7 @@ def standing_list(request):
     season = int(request.query_params.get("season", settings.CURRENT_SEASON))
     standings = Standing.objects.filter(season=season).select_related("team")
     serializer = StandingSerializer(
-        standings, many=True, context={"form": recent_form(season)}
+        standings, many=True, context={"form": recent_form(season, limit=FORM_LENGTH, stage=TABLE_STAGE)}
     )
     return Response(serializer.data)
 
@@ -64,3 +67,15 @@ def team_list(request):
     if request.query_params.get("followed") == "true":
         teams = teams.filter(is_followed=True)
     return Response(TeamSerializer(teams, many=True).data)
+
+
+# Personal app for now: no login, so no session auth (and no CSRF check).
+# TODO before deploying publicly: restrict this to you (e.g. IsAdminUser + CSRF token).
+@api_view(["PATCH"])
+@authentication_classes([])
+def team_follow(request, pk):
+    team = get_object_or_404(Team, pk=pk)
+    serializer = TeamFollowSerializer(team, data=request.data, partial=True)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(TeamSerializer(team).data)

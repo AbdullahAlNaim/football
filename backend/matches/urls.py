@@ -6,4 +6,5 @@ urlpatterns = [
     path("matches/", views.match_list, name="match-list"),
     path("standings/", views.standing_list, name="standing-list"),
     path("teams/", views.team_list, name="team-list"),
+    path("teams/<int:pk>/", views.team_follow, name="team-follow"),
 ]

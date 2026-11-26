@@ -25,13 +25,19 @@ def result_for(match: Match, team_id: int) -> str:
     return "W" if home_won == is_home else "L"
 
 
-def recent_form(season: int, limit: int = 3) -> dict[int, list[str]]:
-    """Last `limit` results per team, oldest first, e.g. {81: ["W", "D", "W"]}."""
+def recent_form(season: int, limit: int = 3, stage: str | None = None) -> dict[int, list[str]]:
+    """Last `limit` results per team, oldest first, e.g. {81: ["W", "D", "W"]}.
+
+    Pass `stage` (e.g. "LEAGUE_STAGE") to count only matches from that stage,
+    so a table's form matches the table it sits in.
+    """
     finished = (
         Match.objects
         .filter(season=season, status=Match.Status.FINISHED)
         .order_by("-kickoff_utc")
     )
+    if stage:
+        finished = finished.filter(stage=stage)
     form = defaultdict(list)
     for match in finished:
         for team_id in (match.home_team_id, match.away_team_id):

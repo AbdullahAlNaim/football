@@ -9,6 +9,14 @@ class TeamSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "short_name", "tla", "crest_url", "is_followed"]
 
 
+class TeamFollowSerializer(serializers.ModelSerializer):
+    """Write side: the only field the app may change on a team."""
+
+    class Meta:
+        model = Team
+        fields = ["is_followed"]
+
+
 class MatchSerializer(serializers.ModelSerializer):
     home_team = TeamSerializer()
     away_team = TeamSerializer()
@@ -24,13 +32,17 @@ class MatchSerializer(serializers.ModelSerializer):
 class StandingSerializer(serializers.ModelSerializer):
     team = TeamSerializer()
     form = serializers.SerializerMethodField()
+    goal_difference = serializers.SerializerMethodField()
 
     class Meta:
         model = Standing
         fields = [
             "position", "team", "played", "won", "draw", "lost",
-            "points", "goals_for", "goals_against", "form",
+            "points", "goals_for", "goals_against", "goal_difference", "form",
         ]
+
+    def get_goal_difference(self, obj):
+        return obj.goals_for - obj.goals_against
 
     def get_form(self, obj):
         return self.context.get("form", {}).get(obj.team_id, [])

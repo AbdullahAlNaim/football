@@ -1,33 +1,21 @@
-import { useHealth } from "./hooks/useHealth";
-import { StandingsTable } from "./components/StandingsTable";
-import { MatchdayCard } from "./components/MatchdayCard";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { AppShell } from "./components/layout/AppShell";
+import { CalendarPage } from "./pages/CalendarPage";
+import { ComingSoonPage } from "./pages/ComingSoonPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { TeamsPage } from "./pages/TeamsPage";
 
 export default function App() {
-  const { data, isPending, isError, error } = useHealth();
-
   return (
-    <main className="min-h-screen bg-bg p-4 text-white sm:p-8">
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="rounded-3xl bg-card p-6 text-center">
-          <h1 className="text-2xl font-semibold mb-2">Matchday</h1>
-
-          {isPending && <p>Checking backend…</p>}
-
-          {isError && (
-            <p className="text-red-600">Backend unreachable: {error.message}</p>
-          )}
-
-          {data && (
-            <p className="text-green-600">
-              API: {data.status} · Database: {data.database ? "connected" : "down"}
-            </p>
-          )}
-
-        </div>
-
-        <MatchdayCard />
-        <StandingsTable />
-      </div>
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<AppShell />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="calendar" element={<CalendarPage />} />
+          <Route path="teams" element={<TeamsPage />} />
+          <Route path="*" element={<ComingSoonPage title="Page not found" message="That page doesn't exist." />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }

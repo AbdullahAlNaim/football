@@ -19,6 +19,7 @@ export type Standing = {
   points: number;
   goals_for: number;
   goals_against: number;
+  goal_difference: number;
   form: FormResult[];
 };
 
