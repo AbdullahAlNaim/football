@@ -146,3 +146,5 @@ MAILERS = {
 
 CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
 FOOTBALL_DATA_TOKEN = env("FOOTBALL_DATA_TOKEN")
+
+CURRENT_SEASON = env.int("CURRENT_SEASON", default=2026)   # 2026 = the 2026/27 season
