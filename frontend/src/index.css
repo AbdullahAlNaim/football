@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+@theme {
+  --color-bg: #0b1220;        /* page background, deep navy */
+  --color-card: #131c2e;      /* card panels */
+  --color-card-hi: #1b2640;   /* raised elements: score pill, buttons */
+  --color-accent: #4f8ff7;    /* active tab, primary buttons */
+  --color-win: #12a383;
+  --color-loss: #e04848;
+  --color-draw: #e5e7eb;
+  --color-live: #dc2626;
+}
