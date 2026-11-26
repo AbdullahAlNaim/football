@@ -4,6 +4,7 @@ import type { Match } from "../api/types";
 import { useMatches } from "../hooks/useMatches";
 import { kickoffLabel, startOfMatchWeek, toApiDate, weekDays } from "../lib/dates";
 import { FeaturedMatch } from "./FeaturedMatch";
+import { TeamLink } from "./TeamLink";
 import { WeekStrip } from "./WeekStrip";
 
 export function MatchdayCard() {
@@ -78,7 +79,9 @@ function AlsoToday({ matches }: { matches: Match[] }) {
           className="flex items-center justify-between rounded-xl bg-card-hi px-4 py-3 text-sm"
         >
           <span className="text-white">
-            {m.home_team.short_name} v {m.away_team.short_name}
+            <TeamLink team={m.home_team}>{m.home_team.short_name}</TeamLink>
+            <span className="text-slate-500"> v </span>
+            <TeamLink team={m.away_team}>{m.away_team.short_name}</TeamLink>
           </span>
           <span className="text-slate-400">{kickoffLabel(m.kickoff_utc)}</span>
         </div>

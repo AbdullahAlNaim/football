@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchTeams, setTeamFollowed } from "../api/teams";
 
-export function useTeams(followedOnly = false) {
+export function useTeams(followedOnly = false, currentSeasonOnly = false) {
   return useQuery({
-    queryKey: ["teams", { followedOnly }],
-    queryFn: () => fetchTeams(followedOnly),
+    queryKey: ["teams", { followedOnly, currentSeasonOnly }],
+    queryFn: () => fetchTeams(followedOnly, currentSeasonOnly),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -20,6 +20,7 @@ export function useFollowTeam() {
       queryClient.invalidateQueries({ queryKey: ["teams"] });
       queryClient.invalidateQueries({ queryKey: ["matches"] });
       queryClient.invalidateQueries({ queryKey: ["standings"] });
+      queryClient.invalidateQueries({ queryKey: ["club"] });
     },
   });
 }

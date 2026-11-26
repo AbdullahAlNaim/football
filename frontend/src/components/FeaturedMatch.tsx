@@ -2,6 +2,7 @@ import type { Match, Team } from "../api/types";
 import { useCountdown } from "../hooks/useCountdown";
 import { kickoffLabel } from "../lib/dates";
 import { stageLabel } from "../lib/labels";
+import { TeamLink } from "./TeamLink";
 
 export function FeaturedMatch({ match }: { match: Match }) {
   const upcoming = match.status === "SCHEDULED" || match.status === "TIMED";
@@ -25,13 +26,13 @@ export function FeaturedMatch({ match }: { match: Match }) {
 
 function TeamSide({ team }: { team: Team }) {
   return (
-    <div className="flex flex-col items-center gap-2 text-center sm:gap-4">
+    <TeamLink team={team} className="flex flex-col items-center gap-2 text-center sm:gap-4">
       <img src={team.crest_url} alt="" className="h-14 w-14 object-contain sm:h-28 sm:w-28" />
       <span className="text-sm font-semibold text-white sm:text-2xl">
         <span className="sm:hidden">{team.tla}</span>
         <span className="hidden sm:inline">{team.short_name}</span>
       </span>
-    </div>
+    </TeamLink>
   );
 }
 

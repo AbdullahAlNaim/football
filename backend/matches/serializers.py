@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from .models import Match, Standing, Team
+from .selectors import result_for
 
 
 class TeamSerializer(serializers.ModelSerializer):
@@ -27,6 +28,20 @@ class MatchSerializer(serializers.ModelSerializer):
             "id", "competition", "stage", "matchday", "kickoff_utc",
             "status", "home_score", "away_score", "home_team", "away_team",
         ]
+
+
+class ClubMatchSerializer(MatchSerializer):
+    """A match from one club's point of view: adds that club's result (W/D/L)."""
+
+    result = serializers.SerializerMethodField()
+
+    class Meta(MatchSerializer.Meta):
+        fields = MatchSerializer.Meta.fields + ["result"]
+
+    def get_result(self, obj):
+        if obj.status != Match.Status.FINISHED:
+            return None
+        return result_for(obj, self.context["team_id"])
 
 
 class StandingSerializer(serializers.ModelSerializer):

@@ -1,15 +1,19 @@
+import { useSeasons } from "../hooks/useClubs";
 import { useStandings } from "../hooks/useStandings";
+import { seasonLabel } from "../lib/labels";
+import { TeamLink } from "./TeamLink";
 import { FormDots } from "./FormDots";
 
 export function StandingsTable() {
   const { data, isPending, isError, error } = useStandings();
+  const { data: seasons } = useSeasons();
 
   return (
     <section className="rounded-3xl bg-card p-4 sm:p-6 shadow-lg shadow-black/30">
       <header className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-white">Champions League Table</h2>
         <span className="rounded-full bg-card-hi px-4 py-1.5 text-sm text-slate-300">
-          2026/27
+          {seasons ? seasonLabel(seasons.current) : "…"}
         </span>
       </header>
 
@@ -53,7 +57,7 @@ export function StandingsTable() {
                   </td>
                   <td className="py-3 pl-2 pr-2 text-slate-300">{row.position}</td>
                   <td className="py-3 pr-2">
-                    <div className="flex items-center gap-3">
+                    <TeamLink team={row.team} className="flex items-center gap-3">
                       <img
                         src={row.team.crest_url}
                         alt=""
@@ -64,7 +68,7 @@ export function StandingsTable() {
                         <span className="sm:hidden">{row.team.tla}</span>
                         <span className="hidden sm:inline">{row.team.short_name}</span>
                       </span>
-                    </div>
+                    </TeamLink>
                   </td>
                   <td className="hidden px-2 py-3 text-center text-slate-300 sm:table-cell">{row.played}</td>
                   <td className="hidden px-2 py-3 text-center text-slate-300 sm:table-cell">{row.won}</td>

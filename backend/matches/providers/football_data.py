@@ -73,7 +73,7 @@ class FootballDataProvider:
             matches.append(
                 MatchData(
                     provider_id=m["id"],
-                    season=season,
+                    season=self._season_of(m, season),
                     stage=m["stage"],
                     matchday=m.get("matchday"),
                     home_team=self._parse_team(m["homeTeam"]),
@@ -85,6 +85,12 @@ class FootballDataProvider:
                 )
             )
         return matches
+
+    def _season_of(self, m: dict, fallback: int) -> int:
+        # Each match says which season it belongs to ("startDate": "2026-07-07"),
+        # so a date-range query that spans two seasons still labels matches correctly.
+        start = ((m.get("season") or {}).get("startDate") or "")[:4]
+        return int(start) if start.isdigit() else fallback
 
     def _parse_team(self, t: dict) -> TeamData:
         return TeamData(

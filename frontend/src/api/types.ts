@@ -39,3 +39,32 @@ export type Match = {
   home_team: Team;
   away_team: Team;
 };
+
+
+export type ClubStats = {
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goals_for: number;
+  goals_against: number;
+  goal_difference: number;
+  clean_sheets: number;
+  win_rate: number;
+  form: FormResult[];
+};
+
+export type ClubMatch = Match & { result: FormResult | null };
+
+export type ClubResults = {
+  team: Team;
+  season: number;
+  stats: ClubStats;
+  results: ClubMatch[];
+  upcoming: ClubMatch[];
+};
+
+export type Seasons = {
+  current: number;
+  seasons: number[];
+};

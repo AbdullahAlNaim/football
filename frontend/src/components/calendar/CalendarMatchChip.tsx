@@ -1,5 +1,6 @@
 import type { Match } from "../../api/types";
 import { kickoffLabel, timeLabel } from "../../lib/dates";
+import { TeamLink } from "../TeamLink";
 
 // Compact "crest TLA v TLA crest / time" chip for a month-grid cell.
 export function CalendarMatchChip({ match }: { match: Match }) {
@@ -11,11 +12,15 @@ export function CalendarMatchChip({ match }: { match: Match }) {
       title={`${home.name} vs ${away.name} · ${kickoffLabel(match.kickoff_utc)}`}
     >
       <div className="flex items-center gap-1">
-        <img src={home.crest_url} alt="" className="h-4 w-4 shrink-0 object-contain" />
-        <span className="hidden font-semibold text-white lg:inline">{home.tla}</span>
+        <TeamLink team={home} className="flex items-center gap-1">
+          <img src={home.crest_url} alt="" className="h-4 w-4 shrink-0 object-contain" />
+          <span className="hidden font-semibold text-white lg:inline">{home.tla}</span>
+        </TeamLink>
         <span className="text-slate-500">v</span>
-        <span className="hidden font-semibold text-white lg:inline">{away.tla}</span>
-        <img src={away.crest_url} alt="" className="h-4 w-4 shrink-0 object-contain" />
+        <TeamLink team={away} className="flex items-center gap-1">
+          <span className="hidden font-semibold text-white lg:inline">{away.tla}</span>
+          <img src={away.crest_url} alt="" className="h-4 w-4 shrink-0 object-contain" />
+        </TeamLink>
         <span className="sr-only">
           {home.name} vs {away.name}
         </span>

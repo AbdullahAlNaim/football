@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from matches.models import Match
 from matches.providers import get_provider
+from matches.services import save_standings
 
 MATCH_DONE_AFTER = timedelta(minutes=120)
 DONE = ["FINISHED", "POSTPONED", "CANCELLED"]
@@ -19,6 +20,7 @@ class Command(BaseCommand):
             return
 
         provider = get_provider()
+        seasons = set(pending.values_list("season", flat=True))
         match_days = {m.kickoff_utc.date() for m in pending}
         for day in match_days:  # one API call per match day
             for result in provider.get_matches_on(day):
@@ -28,3 +30,9 @@ class Command(BaseCommand):
                     away_score=result.away_score,
                     last_synced_at=timezone.now(),
                 )
+
+        # Results changed, so the table did too: refresh it (1 call per season).
+        for season in seasons:
+            count = save_standings(season, provider.get_standings(season))
+            self.stdout.write(f"Refreshed {count} table rows for {season}.")
+        self.stdout.write(self.style.SUCCESS(f"Updated results for {len(match_days)} match day(s)."))

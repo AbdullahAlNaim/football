@@ -147,4 +147,17 @@ MAILERS = {
 CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
 FOOTBALL_DATA_TOKEN = env("FOOTBALL_DATA_TOKEN")
 
-CURRENT_SEASON = env.int("CURRENT_SEASON", default=2026)   # 2026 = the 2026/27 season
+from datetime import date
+
+
+def _season_starting(today: date) -> int:
+    """European seasons start in summer and are named by their start year:
+    from July on, it's this year's season (2026 = 2026/27); before that, last year's."""
+    return today.year if today.month >= 7 else today.year - 1
+
+
+# Worked out from today's date, so new seasons are picked up automatically.
+# Set CURRENT_SEASON in .env only to override it.
+CURRENT_SEASON = env.int("CURRENT_SEASON", default=_season_starting(date.today()))
+# Oldest season to keep in the database (sync_fixtures --all syncs FIRST_SEASON..CURRENT_SEASON).
+FIRST_SEASON = env.int("FIRST_SEASON", default=2025)

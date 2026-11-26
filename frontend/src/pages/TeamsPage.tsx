@@ -1,9 +1,10 @@
 import { useState } from "react";
 import type { Team } from "../api/types";
+import { TeamLink } from "../components/TeamLink";
 import { useFollowTeam, useTeams } from "../hooks/useTeams";
 
 export function TeamsPage() {
-  const { data: teams = [], isPending, isError } = useTeams();
+  const { data: teams = [], isPending, isError } = useTeams(false, true);
   const follow = useFollowTeam();
   const [query, setQuery] = useState("");
 
@@ -105,11 +106,13 @@ function TeamCard({ team, pending, onToggle }: { team: Team; pending: boolean; o
         team.is_followed ? "bg-accent/10 ring-accent/40" : "bg-card ring-white/5"
       }`}
     >
-      <img src={team.crest_url} alt="" loading="lazy" className="h-10 w-10 shrink-0 object-contain" />
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold text-white">{team.short_name}</p>
-        <p className="truncate text-xs text-slate-400">{team.name}</p>
-      </div>
+      <TeamLink team={team} className="flex min-w-0 flex-1 items-center gap-3">
+        <img src={team.crest_url} alt="" loading="lazy" className="h-10 w-10 shrink-0 object-contain" />
+        <div className="min-w-0">
+          <p className="truncate font-semibold text-white">{team.short_name}</p>
+          <p className="truncate text-xs text-slate-400">{team.name}</p>
+        </div>
+      </TeamLink>
       <button
         onClick={onToggle}
         disabled={pending}

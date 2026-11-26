@@ -1,7 +1,12 @@
 import type { Team } from "./types";
 
-export async function fetchTeams(followedOnly = false): Promise<Team[]> {
-  const res = await fetch(`/api/v1/teams/${followedOnly ? "?followed=true" : ""}`);
+export async function fetchTeams(followedOnly = false, currentSeasonOnly = false): Promise<Team[]> {
+  const params = new URLSearchParams();
+  if (followedOnly) params.set("followed", "true");
+  if (currentSeasonOnly) params.set("season", "current");
+  const query = params.toString();
+
+  const res = await fetch(`/api/v1/teams/${query ? `?${query}` : ""}`);
   if (!res.ok) {
     throw new Error(`Teams request failed: ${res.status}`);
   }

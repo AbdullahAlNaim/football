@@ -28,7 +28,9 @@ Built with **React + TypeScript**, **Django REST Framework** and **PostgreSQL**,
   - **Champions League table** in the same format as Google's: MP, W, D, L, GF, GA, GD, Pts and the **last 5 results**, with qualification zones marked and my clubs highlighted.
   - **Latest Results**: my clubs' most recent final scores.
 - **Calendar**: a month view showing only my teams' fixtures and their opponents, with kickoff times. On phones it becomes a list of match days.
-- **My Teams**: search all Champions League clubs and follow or unfollow them. The calendar and dashboard update straight away.
+- **Club page**: search any club, or tap one of your teams, to see that club's season stats (played, W/D/L, goals, clean sheets, win rate, last 5), its upcoming matches, and every result, newest first. Switch seasons with a dropdown. **Click any crest or club name** anywhere in the app (table, calendar, results, team chips) to jump straight to that club.
+- **My Teams**: search the current season's Champions League clubs and follow or unfollow them. The calendar and dashboard update straight away.
+- **Multiple seasons**: the calendar goes back to January 2026 (the 2025/26 season) and forward through 2027. New seasons are picked up automatically.
 - **Responsive**: side navigation and multi-column layouts on desktop; a single column with a bottom tab bar on mobile.
 
 ## Tech stack
@@ -61,7 +63,8 @@ flowchart LR
 | Command | What it does | API calls |
 | --- | --- | --- |
 | `sync_fixtures` | Pulls the whole season's schedule and the current table. Run once a week, or after a draw. | 2 |
-| `sync_results` | Checks the **database first**: only if a match kicked off 2+ hours ago and isn't marked finished does it fetch that day's results. | Usually **0**; otherwise 1 per match day |
+| `sync_fixtures --all` | Same as above for every season from `FIRST_SEASON` to now (first-time setup). | 2 per season |
+| `sync_results` | Checks the **database first**: only if a match kicked off 2+ hours ago and isn't marked finished does it fetch that day's results, then refresh the table. | Usually **0**; otherwise 1 per match day + 1 for the table |
 
 Run every 15 minutes, `sync_results` makes zero API calls on almost every run and picks up each final score shortly after the match ends.
 
@@ -143,7 +146,7 @@ pip install -r requirements.txt
 
 python manage.py migrate
 python manage.py createsuperuser   # for the Django admin
-python manage.py sync_fixtures     # loads the season's matches and table
+python manage.py sync_fixtures --all   # loads every season's matches and tables (FIRST_SEASON to now)
 python manage.py runserver
 ```
 
@@ -173,9 +176,10 @@ Syncing isn't scheduled yet (see the [roadmap](#roadmap)), so the data only chan
 
 | When | Command | What it updates | API calls |
 | --- | --- | --- | --- |
-| **After a match day** (recommended) | `python manage.py sync_fixtures` | Every match's score and status, rescheduled kickoffs, **and the league table** | 2 |
-| Quick score check after a match | `python manage.py sync_results` | Scores and status of matches that kicked off 2+ hours ago. Does **not** refresh the table yet | 0–1 per match day |
-| Start of a new season | Set `CURRENT_SEASON` in `.env` (e.g. `2027` for 2027/28), then `sync_fixtures` | The new season's teams, schedule and table | 2 |
+| **After a match day** (recommended) | `python manage.py sync_results` | Scores and status of every match that kicked off 2+ hours ago, **and the league table** | 0 if nothing's pending; otherwise 1 per match day + 1 |
+| Once a week, or if kickoff times changed | `python manage.py sync_fixtures` | The whole current season: every match, rescheduled kickoffs, and the table | 2 |
+| First-time setup, or to fill in past seasons | `python manage.py sync_fixtures --all` | Every season from `FIRST_SEASON` (default 2025) to the current one | 2 per season |
+| Start of a new season | Nothing to change: the current season is worked out from today's date (from July it's the new season). Just run `sync_fixtures` | The new season's teams, schedule and table | 2 |
 | After a knockout draw | `python manage.py sync_fixtures` | Adds knockout fixtures once both teams are known | 2 |
 
 ### Steps (Windows PowerShell)
@@ -189,7 +193,7 @@ cd backend
 venv\Scripts\Activate.ps1
 
 # 3. Sync
-python manage.py sync_fixtures
+python manage.py sync_results
 ```
 
 On macOS or Linux, activate with `source venv/bin/activate` instead.
@@ -202,8 +206,9 @@ To check it worked: in the admin (http://localhost:8000/admin/), **Matches** sho
 
 | What you see | Why | Fix |
 | --- | --- | --- |
-| A finished match still shows "vs" | Not synced since it ended, or football-data.org hasn't marked it finished yet (free-tier scores lag slightly) | Run `sync_fixtures` again a little later |
-| Last 5 has fewer dots than MP | Same cause: the table counts a match your stored results don't have yet | `sync_fixtures` |
+| A finished match still shows "vs" | Not synced since it ended, or football-data.org hasn't marked it finished yet (free-tier scores lag slightly) | Run `sync_results` again a little later |
+| Last 5 has fewer dots than MP | Same cause: the table counts a match your stored results don't have yet | `sync_results` |
+| `Skipped 2025: 403 …` during `--all` | Your football-data.org plan doesn't include that season | Raise `FIRST_SEASON` in `.env`, or use a plan that covers it |
 | `RateLimited` error | More than 10 API calls in a minute | Wait 60 seconds and run it again |
 | `Your API token is invalid` | Wrong or missing `FOOTBALL_DATA_TOKEN` in `.env` | Copy the token from your football-data.org account |
 | A connection error mentioning port 5433 | The database container isn't running | `docker compose up -d db` |
@@ -213,7 +218,7 @@ To check it worked: in the admin (http://localhost:8000/admin/), **Matches** sho
 Until the worker container exists, Windows Task Scheduler can run the sync daily. Replace `C:\path\to\football` with where you cloned the repo; Docker Desktop has to be running for the database to be reachable.
 
 ```powershell
-schtasks /Create /TN "Matchday sync" /SC DAILY /ST 23:30 /TR "C:\path\to\football\backend\venv\Scripts\python.exe C:\path\to\football\backend\manage.py sync_fixtures"
+schtasks /Create /TN "Matchday sync" /SC DAILY /ST 23:30 /TR "C:\path\to\football\backend\venv\Scripts\python.exe C:\path\to\football\backend\manage.py sync_results"
 ```
 
 Champions League matches finish by about 5:00 PM US Eastern, so a late-evening run catches every result that day. Remove it with `schtasks /Delete /TN "Matchday sync"`.
@@ -227,21 +232,26 @@ All endpoints are under `/api/v1/`.
 | GET | `health/` | API and database status (`503` if the database is down) |
 | GET | `matches/?from=YYYY-MM-DD&to=YYYY-MM-DD&followed=true` | Matches in a date range (up to 62 days), with nested teams |
 | GET | `standings/?season=2026` | League-phase table with goal difference and last-5 form |
-| GET | `teams/?followed=true` | All teams, or only followed ones |
+| GET | `teams/?followed=true&season=current` | All teams; optionally only followed ones and/or only this season's clubs |
+| GET | `teams/{id}/results/?season=2026` | One club's season: stats, last 5, upcoming matches, and results newest first |
+| GET | `seasons/` | The current season and every season stored |
 | PATCH | `teams/{id}/` | Follow or unfollow a team: `{"is_followed": true}` |
 
 ## Management commands
 
 ```bash
-python manage.py sync_fixtures              # full schedule + table for the current season
-python manage.py sync_fixtures --season 2025
-python manage.py sync_results               # fetch final scores for matches that should be over
+python manage.py sync_fixtures              # latest: full schedule + table for the current season
+python manage.py sync_fixtures --all        # every season from FIRST_SEASON to now
+python manage.py sync_results               # final scores for matches that should be over, then the table
+
+# Optional: load a past season instead (seasons are named by their start year)
+python manage.py sync_fixtures --season 2025   # the 2025/26 season
 ```
 
 ## Roadmap
 
 - [ ] **Where to watch:** a broadcaster badge on each match (in the US, Champions League matches stream on Paramount+)
-- [ ] **Team stats page:** W/D/L, goals and form per club
+- [x] **Club page:** season stats, upcoming matches and results for any club
 - [ ] **More leagues:** La Liga, Premier League, Bundesliga, Ligue 1, with a league selector on the table
 - [ ] **Run the sync automatically:** a worker container that runs `sync_results` every 15 minutes
 - [ ] **Full Docker setup:** backend and frontend containers with Caddy for HTTPS

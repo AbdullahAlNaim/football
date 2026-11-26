@@ -3,6 +3,7 @@ import type { Match, Team } from "../api/types";
 import { useMatches } from "../hooks/useMatches";
 import { toApiDate } from "../lib/dates";
 import { stageLabel } from "../lib/labels";
+import { TeamLink } from "./TeamLink";
 
 const RESULTS_WINDOW_DAYS = 30;
 const RESULTS_SHOWN = 5;
@@ -67,11 +68,11 @@ function ResultCard({ match }: { match: Match }) {
 
 function ResultTeam({ team, won }: { team: Team; won: boolean }) {
   return (
-    <div className="flex min-w-0 flex-col items-center gap-2 text-center">
+    <TeamLink team={team} className="flex min-w-0 flex-col items-center gap-2 text-center">
       <img src={team.crest_url} alt="" loading="lazy" className="h-12 w-12 object-contain" />
       <span className={`max-w-full truncate text-sm ${won ? "font-semibold text-white" : "text-slate-400"}`}>
         {team.short_name}
       </span>
-    </div>
+    </TeamLink>
   );
 }

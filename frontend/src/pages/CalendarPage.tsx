@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import type { Team } from "../api/types";
 import { AgendaList } from "../components/calendar/AgendaList";
 import { MonthGrid } from "../components/calendar/MonthGrid";
+import { TeamLink } from "../components/TeamLink";
 import { useMatches } from "../hooks/useMatches";
 import { useTeams } from "../hooks/useTeams";
 import { monthGridDays, toApiDate } from "../lib/dates";
@@ -69,13 +70,14 @@ function FollowedBar({ teams }: { teams: Team[] }) {
         <>
           <span className="mr-1 text-sm text-slate-400">Showing:</span>
           {teams.map((t) => (
-            <span
+            <TeamLink
               key={t.id}
+              team={t}
               className="flex items-center gap-2 rounded-full bg-card-hi py-1 pl-1 pr-3 text-sm text-white"
             >
               <img src={t.crest_url} alt="" className="h-6 w-6 object-contain" />
               {t.short_name}
-            </span>
+            </TeamLink>
           ))}
         </>
       )}

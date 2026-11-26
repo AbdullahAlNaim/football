@@ -2,6 +2,7 @@ import { format, isSameMonth, isToday } from "date-fns";
 import type { Match } from "../../api/types";
 import { timeLabel, toApiDate } from "../../lib/dates";
 import { stageLabel } from "../../lib/labels";
+import { TeamLink } from "../TeamLink";
 
 type Props = {
   days: Date[];
@@ -45,11 +46,15 @@ function AgendaRow({ match }: { match: Match }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-2xl bg-card-hi px-3 py-3">
       <div className="flex min-w-0 items-center gap-2 text-sm">
-        <img src={home.crest_url} alt="" className="h-6 w-6 shrink-0 object-contain" />
-        <span className="truncate font-semibold text-white">
-          {home.short_name} <span className="font-normal text-slate-500">v</span> {away.short_name}
-        </span>
-        <img src={away.crest_url} alt="" className="h-6 w-6 shrink-0 object-contain" />
+        <TeamLink team={home} className="flex min-w-0 items-center gap-2">
+          <img src={home.crest_url} alt="" className="h-6 w-6 shrink-0 object-contain" />
+          <span className="truncate font-semibold text-white">{home.short_name}</span>
+        </TeamLink>
+        <span className="text-slate-500">v</span>
+        <TeamLink team={away} className="flex min-w-0 items-center gap-2">
+          <span className="truncate font-semibold text-white">{away.short_name}</span>
+          <img src={away.crest_url} alt="" className="h-6 w-6 shrink-0 object-contain" />
+        </TeamLink>
       </div>
       <div className="shrink-0 text-right">
         <p className="text-sm font-semibold text-white">{timeLabel(match.kickoff_utc)}</p>
